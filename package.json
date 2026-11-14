@@ -1,0 +1,31 @@
+{
+  "name": "mirijari",
+  "version": "0.1.0",
+  "private": true,
+  "description": "미리자리 — 내 키·취향·동행에 맞는 좌석을 예매 전에 미리 골라 주는 서비스",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "data": "node --env-file-if-exists=.env.local scripts/fetch-data.mjs",
+    "predev": "npm run data",
+    "prebuild": "npm run data",
+    "typecheck": "tsc --noEmit",
+    "test:engine": "node --experimental-strip-types scripts/engine-check.ts",
+    "preview:pages": "node scripts/preview-pages.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2"
+  },
+  "type": "module"
+}

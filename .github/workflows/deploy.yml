@@ -1,0 +1,55 @@
+name: GitHub Pages 배포
+
+on:
+  push:
+    branches: [main]
+  # 매일 05:00 KST에 다시 빌드해 공연·영화 목록을 갱신한다
+  # (저장소에 60일간 활동이 없으면 GitHub가 예약 실행을 자동으로 멈춘다)
+  schedule:
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - id: pages
+        uses: actions/configure-pages@v5
+      - run: npm ci
+      - run: npm run test:engine
+      # GitHub Pages는 서버가 없는 정적 호스팅이라 서버 API(AI 기능)는 제외하고 빌드한다
+      - run: rm -rf src/app/api
+      - run: npm run build
+        env:
+          STATIC_EXPORT: '1'
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          KOPIS_API_KEY: ${{ secrets.KOPIS_API_KEY }}
+          KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
+      - run: touch out/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
