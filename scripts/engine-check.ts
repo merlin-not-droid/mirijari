@@ -7,6 +7,7 @@ import { makeCinema, THEATERS } from '../src/lib/data/grid.ts';
 import { ARENAS, STADIUMS } from '../src/lib/data/zones.ts';
 import { analyzeGrid, simulateSold, topPicks, rowProfile } from '../src/lib/engine/grid.ts';
 import { analyzeZones, topZones } from '../src/lib/engine/zone.ts';
+import { matchVenues } from '../src/lib/data/index.ts';
 
 const persona = (over: Partial<Persona>): Persona => ({ ...DEFAULT_PROFILE, experience: 'gte5', style: 'immerse', category: 'movie', ...over });
 const none = new Set<string>();
@@ -80,5 +81,21 @@ console.log('   아이 동반·햇빛 민감:', bf.map((p) => `${p.label}(${p.sc
 check('응원파는 홈 응원석이 1순위', () => assert.equal(bc[0].zoneId, 'home-low'));
 check('아이 동반은 익사이팅존을 받지 않는다', () => assert.ok(bf.every((p) => p.zoneId !== 'exciting')));
 check('열·좌우 조언이 붙는다', () => assert.ok(bc.every((p) => p.rowAdvice && p.sideAdvice)));
+
+console.log('공연장 매칭 (KOPIS 시설명)');
+const ids = (f: string) => matchVenues(f).venues.map((v) => v.id);
+check('이름 일부만 같은 다른 시설은 매칭하지 않는다', () => {
+  assert.deepEqual(ids('인스파이어 컬쳐홀'), []);
+  assert.deepEqual(ids('청주예술의전당'), []);
+});
+check('정확한 시설명은 바로 매칭한다', () => {
+  assert.deepEqual(ids('인스파이어 아레나'), ['inspire']);
+  assert.ok(matchVenues('샤롯데씨어터').exact);
+});
+check('홀이 여러 개인 시설은 후보를 주고 사용자가 고르게 한다', () => {
+  assert.deepEqual(ids('올림픽공원'), ['kspo', 'handball', 'olympic-hall']);
+  assert.deepEqual(ids('예술의전당 [서울]'), ['sac-opera']);
+  assert.equal(matchVenues('세종문화회관').exact, false);
+});
 
 console.log(`\n${passed}개 검증 통과`);

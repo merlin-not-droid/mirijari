@@ -4,11 +4,35 @@ import { ARENAS, ARENA_TEMPLATES } from './zones.ts';
 
 export const DATA_AS_OF = '2026년 11월';
 
-/** KOPIS 공연시설명 → 보유한 공연장 데이터. 없으면 null (유형 템플릿을 고르게 함) */
-export function matchVenue(facility: string): Venue | null {
-  const norm = facility.replace(/\s/g, '').toLowerCase();
-  const hit = [...ARENAS, ...THEATERS].find((v) => v.match.every((m) => norm.includes(m.replace(/\s/g, '').toLowerCase())));
-  return hit?.venue ?? null;
+/**
+ * KOPIS 공연목록은 시설명만 주고 홀 이름은 주지 않는 경우가 많다.
+ * 홀이 여러 개인 시설은 보유한 홀을 후보로 보여 주고 사용자가 고르게 한다.
+ */
+const COMPLEXES: { match: string[]; ids: string[] }[] = [
+  { match: ['올림픽공원'], ids: ['kspo', 'handball', 'olympic-hall'] },
+  { match: ['인스파이어엔터테인먼트리조트'], ids: ['inspire'] },
+  { match: ['세종문화회관'], ids: ['sejong'] },
+  { match: ['LG아트센터'], ids: ['lgart'] },
+  { match: ['^예술의전당'], ids: ['sac-opera'] },
+  { match: ['충무아트'], ids: ['chungmu'] },
+  { match: ['블루스퀘어'], ids: ['bluesquare'] },
+  { match: ['홍익대', '대학로'], ids: ['hongik'] },
+];
+
+const norm = (s: string) => s.replace(/\s/g, '').toLowerCase();
+/** 모든 단어가 포함돼야 하고, '^'로 시작하는 단어는 시설명 앞부분과 일치해야 한다 */
+const hit = (facility: string, terms: string[]) =>
+  terms.every((t) => (t.startsWith('^') ? facility.startsWith(norm(t.slice(1))) : facility.includes(norm(t))));
+
+/** KOPIS 공연시설명 → 보유한 공연장 후보. exact면 바로 그 공연장으로 추천한다 */
+export function matchVenues(facility: string): { venues: Venue[]; exact: boolean } {
+  const f = norm(facility);
+  const all = [...ARENAS, ...THEATERS];
+  const direct = all.filter((v) => hit(f, v.match)).map((v) => v.venue);
+  const complex = COMPLEXES.filter((c) => hit(f, c.match))
+    .flatMap((c) => c.ids.map((id) => all.find((v) => v.venue.id === id)!.venue));
+  const venues = [...new Map([...direct, ...complex].map((v) => [v.id, v])).values()];
+  return { venues, exact: venues.length === 1 && complex.length === 0 };
 }
 
 export function venuesFor(category: Category): { known: Venue[]; templates: Venue[] } {

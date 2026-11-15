@@ -184,7 +184,7 @@ const A = (id: string, name: string, sub: string, scale: Scale, match: string[],
 
 export const ARENAS: { match: string[]; venue: ZoneVenue }[] = [
   A('kspo', 'KSPO DOME', '서울 올림픽공원 · 약 15,000석', 'arena', ['KSPO']),
-  A('inspire', '인스파이어 아레나', '인천 영종도 · 약 15,000석', 'arena', ['인스파이어']),
+  A('inspire', '인스파이어 아레나', '인천 영종도 · 약 15,000석', 'arena', ['인스파이어아레나']),
   A('gocheok-c', '고척스카이돔', '서울 구로 · 공연 시 약 2만석 이상', 'dome', ['고척'], '돔 특성상 울림이 있어요. 뒤쪽 구역은 전광판 의존도가 높아요'),
   A('jamsil-arena-c', '잠실실내체육관', '서울 잠실 · 약 1만석', 'arena', ['잠실실내']),
   A('handball', '올림픽공원 핸드볼경기장', '서울 올림픽공원 · 약 5,000석', 'hall', ['핸드볼']),

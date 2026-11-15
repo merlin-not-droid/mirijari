@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Category, EventItem, HallType, MovieItem, Snapshot, Sport, Venue } from '@/lib/types';
 import { SPORTS } from '@/lib/options';
-import { DATA_AS_OF, matchVenue, venuesFor } from '@/lib/data';
+import { DATA_AS_OF, matchVenues, venuesFor } from '@/lib/data';
 import { CINEMA_PRESETS, CINEMA_SIZES, HALLS, makeCinema } from '@/lib/data/grid';
 import { STADIUMS } from '@/lib/data/zones';
 import { fetchAiEnabled, loadSnapshot, postJson, shrinkImage } from '@/lib/client';
@@ -31,7 +31,7 @@ function ShowPicker({ category, onPick }: { category: 'concert' | 'musical'; onP
   const [month, setMonth] = useState(0);
   const [q, setQ] = useState('');
   const [limit, setLimit] = useState(40);
-  const [unmatched, setUnmatched] = useState<EventItem | null>(null);
+  const [pending, setPending] = useState<{ event: EventItem; candidates: Venue[] } | null>(null);
   const { known, templates } = venuesFor(category);
 
   useEffect(() => {
@@ -54,29 +54,42 @@ function ShowPicker({ category, onPick }: { category: 'concert' | 'musical'; onP
   const events = useMemo(() => {
     const m = months[month];
     const kw = q.trim().toLowerCase();
-    return (snap?.items ?? []).filter(
-      (e) => e.from <= m.to && e.to >= m.from && (!kw || e.name.toLowerCase().includes(kw) || e.venue.toLowerCase().includes(kw)),
-    );
+    // 그 달에 시작하는 공연을 먼저, 이전부터 이어지는 장기 공연은 뒤로
+    const startsIn = (e: EventItem) => (e.from >= m.from ? 0 : 1);
+    return (snap?.items ?? [])
+      .filter((e) => e.from <= m.to && e.to >= m.from && (!kw || e.name.toLowerCase().includes(kw) || e.venue.toLowerCase().includes(kw)))
+      .sort((a, b) => startsIn(a) - startsIn(b) || a.from.localeCompare(b.from));
   }, [snap, month, months, q]);
 
   const choose = (e: EventItem) => {
-    const venue = matchVenue(e.venue);
-    if (venue) onPick({ venue, title: e.name, state: e.state });
-    else setUnmatched(e);
+    const { venues, exact } = matchVenues(e.venue);
+    if (exact) onPick({ venue: venues[0], title: e.name, state: e.state });
+    else setPending({ event: e, candidates: venues });
   };
 
-  if (unmatched)
+  if (pending) {
+    const { event: ev, candidates } = pending;
+    const pick = (venue: Venue) => onPick({ venue, title: ev.name, state: ev.state });
     return (
       <>
-        <h1 className="page-title">{unmatched.name}</h1>
-        <p className="page-sub">{unmatched.venue}</p>
-        <div className="notice">이 공연장은 아직 좌석 데이터가 없어요. 가장 비슷한 유형을 고르면 그 구조를 기준으로 추천해 드려요.</div>
+        <h1 className="page-title">{ev.name}</h1>
+        <p className="page-sub">{ev.venue}</p>
+        {candidates.length > 0 ? (
+          <>
+            <div className="notice plain">이 시설에는 공연장이 여러 곳이에요. 예매처에 적힌 홀을 골라 주세요.</div>
+            <div className="list">{candidates.map((v) => <VenueRow key={v.id} v={v} onClick={() => pick(v)} />)}</div>
+            <h2 className="section-h">목록에 없는 홀이라면 — 비슷한 유형으로</h2>
+          </>
+        ) : (
+          <div className="notice">이 공연장은 아직 좌석 데이터가 없어요. 가장 비슷한 유형을 고르면 그 구조를 기준으로 추천해 드려요.</div>
+        )}
         <div className="list">
-          {templates.map((v) => <VenueRow key={v.id} v={v} onClick={() => onPick({ venue: { ...v, name: unmatched.venue, sub: `${v.name} 기준 추천` }, title: unmatched.name, state: unmatched.state })} />)}
+          {templates.map((v) => <VenueRow key={v.id} v={v} onClick={() => pick({ ...v, name: ev.venue, sub: `${v.name} 기준 추천` })} />)}
         </div>
-        <p style={{ marginTop: 16 }}><button type="button" className="link-btn" onClick={() => setUnmatched(null)}>← 다른 공연 고르기</button></p>
+        <p style={{ marginTop: 16 }}><button type="button" className="link-btn" onClick={() => setPending(null)}>← 다른 공연 고르기</button></p>
       </>
     );
+  }
 
   return (
     <>
