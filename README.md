@@ -1,6 +1,8 @@
 # 미리자리 (MiriJari)
 
 키·취향·동행을 알려주면 콘서트·뮤지컬·영화·스포츠에서 예매 전에 미리 **나에게 맞는 자리 3곳**을 이유와 함께 추천하는 웹 서비스.
+**서비스 주소: https://merlin-not-droid.github.io/mirijari/**
+
 서비스 검토와 설계는 [docs/SERVICE_DESIGN.md](docs/SERVICE_DESIGN.md)에 있습니다.
 
 ## 로컬 실행
