@@ -25,7 +25,7 @@ npm run typecheck
 |---|---|---|
 | `KOPIS_API_KEY` | 이번 달~다다음 달 콘서트·뮤지컬 목록 | [KOPIS Open API](https://www.kopis.or.kr/por/cs/openapi/openApiInfo.do) (무료) |
 | `KOBIS_API_KEY` | 현재 상영작(일별 박스오피스) | [KOBIS Open API](https://www.kobis.or.kr/kobisopenapi/homepg/main/main.do) (무료) |
-| `ANTHROPIC_API_KEY` | AI 코멘트·고민 상담, 예매 화면 캡처 인식 | [Claude Platform](https://platform.claude.com/) (유료, 서버 배포에서만) |
+| `ANTHROPIC_API_KEY` | AI 코멘트·고민 상담, 예매 화면 캡처 인식 | [Claude Platform](https://platform.claude.com/) (유료, 서버 배포에서만). **현재 보류** — 광고 수입이 생기면 입력 |
 
 공연·영화 목록은 `npm run data`가 받아 `public/data/*.json`에 저장합니다 (`dev`/`build` 전에 자동 실행).
 
