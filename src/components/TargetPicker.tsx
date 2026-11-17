@@ -8,6 +8,7 @@ import { STADIUMS } from '@/lib/data/zones';
 import { fetchAiEnabled, loadSnapshot, postJson, shrinkImage } from '@/lib/client';
 import { Chips, Field, Seg, Stepper } from './ui';
 import Icon from './Icon';
+import AdSlot from './AdSlot';
 
 export interface Target {
   venue: Venue;
@@ -260,7 +261,9 @@ function SportsPicker({ onPick }: { onPick: (t: Target) => void }) {
 }
 
 export default function TargetPicker({ category, onPick }: { category: Category; onPick: (t: Target) => void }) {
-  if (category === 'movie') return <MoviePicker onPick={onPick} />;
-  if (category === 'sports') return <SportsPicker onPick={onPick} />;
-  return <ShowPicker category={category} onPick={onPick} />;
+  const picker = category === 'movie' ? <MoviePicker onPick={onPick} />
+    : category === 'sports' ? <SportsPicker onPick={onPick} />
+      : <ShowPicker category={category} onPick={onPick} />;
+  // 영화 화면은 아래에 고정 버튼이 있어 광고를 두지 않는다
+  return <>{picker}{category !== 'movie' && <AdSlot slot="list" />}</>;
 }

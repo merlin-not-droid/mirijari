@@ -6,7 +6,7 @@ import type { Persona } from '../src/lib/types.ts';
 import { makeCinema, THEATERS } from '../src/lib/data/grid.ts';
 import { ARENAS, STADIUMS } from '../src/lib/data/zones.ts';
 import { analyzeGrid, simulateSold, topPicks, rowProfile } from '../src/lib/engine/grid.ts';
-import { analyzeZones, topZones } from '../src/lib/engine/zone.ts';
+import { analyzeBlock, analyzeZones, bestBlockSeats, seatKey, simulateBlockSold, topZones } from '../src/lib/engine/zone.ts';
 import { matchVenues } from '../src/lib/data/index.ts';
 
 const persona = (over: Partial<Persona>): Persona => ({ ...DEFAULT_PROFILE, experience: 'gte5', style: 'immerse', category: 'movie', ...over });
@@ -81,6 +81,28 @@ console.log('   아이 동반·햇빛 민감:', bf.map((p) => `${p.label}(${p.sc
 check('응원파는 홈 응원석이 1순위', () => assert.equal(bc[0].zoneId, 'home-low'));
 check('아이 동반은 익사이팅존을 받지 않는다', () => assert.ok(bf.every((p) => p.zoneId !== 'exciting')));
 check('열·좌우 조언이 붙는다', () => assert.ok(bc.every((p) => p.rowAdvice && p.sideAdvice)));
+
+console.log('몇 열·몇 칸 (구역 좌석 단위)');
+check('구역 추천마다 몇 열·몇 칸이 붙는다', () => assert.ok(bc.every((p) => /^[0-9]+열 · /.test(p.seatLine ?? ''))));
+check('자주 나가는 사람은 통로 바로 옆 칸을 받는다', () => {
+  const goer = persona({ category: 'sports', style: 'tactics', partySize: 1, flags: ['restroom'] });
+  assert.ok(topZones(analyzeZones(park, goer), park, goer, none, 'open')[0].seatLine!.includes('통로 바로 옆'));
+});
+check('남은 자리 모드는 매진 좌석을 피해 추천한다', () => {
+  const zone = park.zones[1];
+  const block = analyzeBlock(zone, cheer, false)!;
+  const soldSet = simulateBlockSold(block.rows, block.cols, 0.85, 5);
+  const seat = bestBlockSeats(block, soldSet, 2)!;
+  assert.ok(!soldSet.has(seatKey(seat.r, seat.k)) && !soldSet.has(seatKey(seat.r, seat.k + 1)));
+  const pick = topZones(analyzeZones(park, cheer), park, cheer, none, 'remaining', false, (id) => (id === zone.id ? soldSet : new Set()))
+    .find((p) => p.zoneId === zone.id)!;
+  assert.deepEqual([pick.blockSeat!.r, pick.blockSeat!.k], [seat.r, seat.k]);
+});
+check('스탠딩 구역은 좌석 번호를 지어내지 않는다', () => {
+  const picks = topZones(analyzeZones(arena, tallFan, true), arena, tallFan, none, 'open', true);
+  assert.ok(picks.filter((p) => p.zoneId!.startsWith('floor')).every((p) => !p.blockSeat));
+});
+check('좌석 격자형 추천에도 통로·중앙 기준 위치가 붙는다', () => assert.ok(pi.every((p) => p.seatLine)));
 
 console.log('공연장 매칭 (KOPIS 시설명)');
 const ids = (f: string) => matchVenues(f).venues.map((v) => v.id);

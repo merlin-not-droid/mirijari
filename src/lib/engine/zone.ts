@@ -126,67 +126,174 @@ function explainZone(a: ZoneAnalysis, z: Zone, p: Persona) {
   return { reasons, tradeoff };
 }
 
-/** 구역 안에서 몇 열·어느 쪽에 앉을지 */
-export function seatAdvice(z: Zone, p: Persona, standingFloor: boolean): { row: string; side: string } {
+// ───────── 구역 안에서 몇 열·몇 칸 ─────────
+export interface SeatRule {
+  standing: boolean;
+  /** 권장 열 범위 (구역 전체 열 수 대비 비율) */
+  lo: number;
+  hi: number;
+  rowWhy: string;
+  side: 'aisle' | 'near' | 'center';
+  sideWhy: string;
+}
+
+export function seatRule(z: Zone, p: Persona, standingFloor: boolean): SeatRule {
   const has = (f: string) => p.flags.includes(f as never);
-  const standing = z.standing || (standingFloor && z.a.flat === 1);
+  const standing = !!z.standing || (standingFloor && z.a.flat === 1);
   const short = p.height < 163;
   const tall = p.height >= 180;
-  const rows = (lo: number, hi: number) => {
-    const a = Math.max(1, Math.round(z.rows * lo));
-    const b = Math.max(a, Math.round(z.rows * hi));
-    return a === b ? `${a}열` : `${a}~${b}열`;
-  };
 
-  let row: string;
+  let row: [number, number, string];
   if (standing) {
-    row = short
+    row = [0, 1, short
       ? '입장 번호가 빠르면 펜스(맨 앞), 아니면 구역 맨 뒤 벽 쪽 — 중간은 앞사람에 가려요'
-      : tall ? '중간~뒤쪽에 서도 충분히 보여요. 뒤쪽이 덜 밀리고 편해요' : '중앙보다 살짝 사이드가 덜 밀려요';
-  } else if (z.rows <= 3) {
-    row = '열 수가 적어 어느 열이든 비슷해요';
-  } else if (z.a.flat >= 0.6) {
-    row = short ? `${rows(0.05, 0.2)} 또는 통로 옆 — 단차가 없어 중간 열은 앞사람에 가려요` : tall ? `${rows(0.3, 0.7)} — 어디서든 보이니 뒤쪽 배려석도 좋아요` : `${rows(0.1, 0.4)} — 뒤로 갈수록 앞사람에 가려요`;
+      : tall ? '중간~뒤쪽에 서도 충분히 보여요. 뒤쪽이 덜 밀리고 편해요' : '중앙보다 살짝 사이드가 덜 밀려요'];
+  } else if (z.rows <= 3) row = [0, 1, '열 수가 적어 어느 열이든 비슷해요'];
+  else if (z.a.flat >= 0.6) {
+    row = short ? [0.05, 0.2, '단차가 없어 중간 열은 앞사람에 가려요']
+      : tall ? [0.3, 0.7, '어디서든 보이니 뒤쪽 배려석도 좋아요'] : [0.1, 0.4, '뒤로 갈수록 앞사람에 가려요'];
   } else if (has('stairs') || p.companion === 'parents' || p.companion === 'kids') {
-    row = z.entry === 'top' ? `${rows(0.7, 1)} — 출입구와 가까워 계단을 적게 내려가요` : `${rows(0.1, 0.35)} — 출입구와 가까워 계단을 적게 올라가요 (1열 난간 주의)`;
-  } else if (has('sun') && z.a.shade < 1 && z.a.shade >= 0.4) {
-    row = `${rows(0.7, 1)} — 지붕 그늘이 먼저 드는 뒷열`;
-  } else if (p.rowPref === 'front' || p.style === 'close' || p.style === 'face') {
-    row = `${rows(0.12, 0.35)} — 가깝되 펜스·난간에 시야가 걸리지 않는 높이`;
-  } else if (p.rowPref === 'back' || p.style === 'tactics' || p.style === 'whole') {
-    row = `${rows(0.55, 0.85)} — 전체가 한눈에 들어오는 높이`;
-  } else if (short && z.a.cheer >= 0.8) {
-    row = `${rows(0.5, 0.8)} 또는 블록 첫 열 — 응원석은 서서 응원해 낮은 열은 가려요`;
-  } else if (z.a.steep >= 0.6) {
-    row = `${rows(0.1, 0.4)} — 위층은 앞쪽 열이 가깝고 덜 아찔해요 (1열 난간 주의)`;
-  } else {
-    row = `${rows(0.35, 0.65)} — 가까움과 전체 시야의 균형`;
-  }
+    row = z.entry === 'top' ? [0.7, 1, '출입구와 가까워 계단을 적게 내려가요'] : [0.1, 0.35, '출입구와 가까워 계단을 적게 올라가요 (1열 난간 주의)'];
+  } else if (has('sun') && z.a.shade < 1 && z.a.shade >= 0.4) row = [0.7, 1, '지붕 그늘이 먼저 드는 뒷열'];
+  else if (p.rowPref === 'front' || p.style === 'close' || p.style === 'face') row = [0.12, 0.35, '가깝되 펜스·난간에 시야가 걸리지 않는 높이'];
+  else if (p.rowPref === 'back' || p.style === 'tactics' || p.style === 'whole') row = [0.55, 0.85, '전체가 한눈에 들어오는 높이'];
+  else if (short && z.a.cheer >= 0.8) row = [0.5, 0.8, '응원석은 서서 응원해 낮은 열은 가려요'];
+  else if (z.a.steep >= 0.6) row = [0.1, 0.4, '위층은 앞쪽 열이 가깝고 덜 아찔해요 (1열 난간 주의)'];
+  else row = [0.35, 0.65, '가까움과 전체 시야의 균형'];
 
-  let side: string;
-  if (standing) side = '짐은 최소화하고, 일행과 벗어나지 않게 위치를 정해 두세요';
+  let side: [SeatRule['side'], string];
+  if (standing) side = ['near', '짐은 최소화하고, 일행과 벗어나지 않게 위치를 정해 두세요'];
   else if (has('restroom') || p.companion === 'kids' || p.companion === 'parents' || tall || has('legroom'))
-    side = '통로 바로 옆 — 드나들기 편하고 다리 공간이 생겨요';
-  else if (p.sidePref === 'aisle' || p.style === 'chill') side = '통로 쪽 — 매점·화장실 다녀오기 편해요';
-  else if (p.sidePref === 'center' || p.style === 'cheer' || p.style === 'hype') side = '블록 안쪽(통로에서 4칸 이상) — 지나다니는 사람 없이 몰입돼요';
-  else side = '통로에서 2~3칸 안쪽 — 출입은 편하고 방해는 덜 받아요';
-  if (!standing && p.partySize >= 3) side += `. ${p.partySize}연석이 없으면 앞뒤 두 줄로 나눠 잡으세요`;
+    side = ['aisle', '드나들기 편하고 다리 공간이 생겨요'];
+  else if (p.sidePref === 'aisle' || p.style === 'chill') side = ['aisle', '매점·화장실 다녀오기 편해요'];
+  else if (p.sidePref === 'center' || p.style === 'cheer' || p.style === 'hype') side = ['center', '지나다니는 사람 없이 몰입돼요'];
+  else side = ['near', '출입은 편하고 방해는 덜 받아요'];
+
+  return { standing, lo: row[0], hi: row[1], rowWhy: row[2], side: side[0], sideWhy: side[1] };
+}
+
+/** 한 블록(통로와 통로 사이)의 한 열 좌석 수 — 구역 성격에 따른 대표값 */
+export const blockCols = (z: Zone) => (z.rows <= 3 ? 12 : z.a.comfort >= 0.9 ? 10 : z.a.flat === 1 ? 16 : z.a.steep >= 0.6 ? 22 : 20);
+export const seatKey = (r: number, k: number) => `${r}-${k}`;
+
+export interface BlockAnalysis {
+  rows: number;
+  cols: number;
+  /** [열][칸] 0~1 */
+  score: number[][];
+  rule: SeatRule;
+}
+
+/** 구역의 대표 블록을 좌석 단위로 채점한다. 스탠딩 구역은 좌석이 없어 null */
+export function analyzeBlock(z: Zone, p: Persona, standingFloor: boolean): BlockAnalysis | null {
+  const rule = seatRule(z, p, standingFloor);
+  if (rule.standing) return null;
+  const rows = z.rows;
+  const cols = blockCols(z);
+  const mid = (rule.lo + rule.hi) / 2;
+  const width = Math.max(0.2, rule.hi - rule.lo);
+  const target = rule.side === 'aisle' ? 0 : rule.side === 'near' ? 2 : Math.floor((cols - 1) / 2);
+  const score = Array.from({ length: rows }, (_, r) => {
+    const f = rows === 1 ? 0.5 : r / (rows - 1);
+    const rowScore = Math.exp(-(((f - mid) / width) ** 2));
+    return Array.from({ length: cols }, (_, k) => {
+      const d = Math.min(k, cols - 1 - k);
+      return 0.65 * rowScore + 0.35 * Math.exp(-(((d - target) / 1.8) ** 2));
+    });
+  });
+  return { rows, cols, score, rule };
+}
+
+/** 예매율 가정: 가운데·중간 열 같은 인기 좌석부터 팔린다고 본다 */
+export function simulateBlockSold(rows: number, cols: number, rate: number, seed: number): Set<string> {
+  let t = (seed * 2654435761) >>> 0;
+  const rnd = () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+  const order: { key: string; v: number }[] = [];
+  for (let r = 0; r < rows; r++)
+    for (let k = 0; k < cols; k++) {
+      const f = rows === 1 ? 0.5 : r / (rows - 1);
+      const c = Math.abs(k - (cols - 1) / 2) / (cols / 2);
+      order.push({ key: seatKey(r, k), v: Math.exp(-(((f - 0.4) / 0.35) ** 2)) * (1 - 0.5 * c) + (rnd() - 0.5) * 0.45 });
+    }
+  order.sort((a, b) => b.v - a.v);
+  return new Set(order.slice(0, Math.round(order.length * Math.min(1, rate))).map((o) => o.key));
+}
+
+export interface BlockPick { r: number; k: number; n: number; score: number; split: boolean }
+
+/** 블록에서 n명이 나란히 앉을 가장 좋은 남은 자리 */
+export function bestBlockSeats(b: BlockAnalysis, sold: Set<string>, party: number): BlockPick | null {
+  for (const [n, split] of [[Math.max(1, party), false], [Math.ceil(party / 2), true]] as const) {
+    let best: BlockPick | null = null;
+    for (let r = 0; r < b.rows; r++)
+      for (let k = 0; k + n <= b.cols; k++) {
+        let sum = 0;
+        let ok = true;
+        for (let i = 0; i < n; i++) {
+          if (sold.has(seatKey(r, k + i))) { ok = false; break; }
+          sum += b.score[r][k + i];
+        }
+        if (ok && (!best || sum / n > best.score)) best = { r, k, n, score: sum / n, split };
+      }
+    if (best || party <= 1) return best;
+  }
+  return null;
+}
+
+/** "13열 · 통로에서 3~4번째 칸" */
+export function seatLine(b: BlockAnalysis, s: { r: number; k: number; n: number }): string {
+  const d = Math.min(s.k, b.cols - s.k - s.n);
+  const middle = d > 0 && d >= Math.floor((b.cols - s.n) / 2) ? '블록 한가운데, ' : '';
+  const pos = d === 0
+    ? (s.n === 1 ? '통로 바로 옆 칸' : `통로 바로 옆부터 ${s.n}칸`)
+    : middle + (s.n === 1 ? `통로에서 ${d + 1}번째 칸` : `통로에서 ${d + 1}~${d + s.n}번째 칸`);
+  return `${s.r + 1}열 · ${pos}`;
+}
+
+const rowRange = (z: Zone, rule: SeatRule) => {
+  const a = Math.max(1, Math.round(z.rows * rule.lo));
+  const b = Math.max(a, Math.round(z.rows * rule.hi));
+  return a === b ? `${a}열` : `${a}~${b}열`;
+};
+
+/** 구역 안에서 몇 열·어느 쪽에 앉을지 (설명 문장) */
+export function seatAdvice(z: Zone, p: Persona, standingFloor: boolean): { row: string; side: string } {
+  const rule = seatRule(z, p, standingFloor);
+  if (rule.standing) return { row: rule.rowWhy, side: rule.sideWhy };
+  const row = z.rows <= 3 ? rule.rowWhy : `${rowRange(z, rule)} 권장 — ${rule.rowWhy}`;
+  const where = { aisle: '통로 바로 옆', near: '통로에서 2~3칸 안쪽', center: '블록 안쪽(통로에서 4칸 이상)' }[rule.side];
+  let side = `${where} — ${rule.sideWhy}`;
+  if (p.partySize >= 3) side += `. ${p.partySize}연석이 없으면 앞뒤 두 줄로 나눠 잡으세요`;
   return { row, side };
 }
 
 const TITLES: Record<Mode, string[]> = {
   open: ['베스트 핏', '대안 A', '대안 B'],
-  remaining: ['남은 구역 중 1순위', '2순위', '3순위'],
+  remaining: ['남은 자리 중 1순위', '2순위', '3순위'],
   ticketing: ['1순위 클릭', '2순위 (플랜 B)', '3순위 (플랜 C)'],
 };
 
-export function topZones(a: ZoneAnalysis, v: ZoneVenue, p: Persona, sold: Set<string>, mode: Mode, standingFloor = false): Pick[] {
+export function topZones(
+  a: ZoneAnalysis, v: ZoneVenue, p: Persona, sold: Set<string>, mode: Mode, standingFloor = false,
+  /** 구역별 매진 좌석 (남은 자리 모드). 없으면 전 좌석 예매 가능으로 본다 */
+  soldSeats: (zoneId: string) => Set<string> = () => new Set(),
+): Pick[] {
   return v.zones
     .filter((z) => !sold.has(z.id))
     .map((z) => {
+      const block = analyzeBlock(z, p, standingFloor);
+      const seat = block ? bestBlockSeats(block, soldSeats(z.id), p.partySize) : null;
       const fit = a.totals.get(z.id)!;
-      return { z, fit, adj: mode === 'ticketing' ? fit * (1 - 0.3 * z.a.demand ** 3) : fit };
+      // 남은 자리가 나쁜 구역은 구역 점수가 높아도 뒤로
+      const seatFactor = block ? (seat ? 0.8 + 0.2 * seat.score : 0) : 1;
+      return { z, block, seat, fit, adj: (mode === 'ticketing' ? fit * (1 - 0.3 * z.a.demand ** 3) : fit) * seatFactor };
     })
+    .filter((c) => c.adj > 0)
     .sort((x, y) => y.adj - x.adj)
     .filter((c, i, all) => {
       // 티켓팅: 1순위보다 경쟁이 센 구역은 플랜 B·C에서 뒤로 미룬다
@@ -195,7 +302,7 @@ export function topZones(a: ZoneAnalysis, v: ZoneVenue, p: Persona, sold: Set<st
       return !safer || c.z.a.demand < all[0].z.a.demand;
     })
     .slice(0, 3)
-    .map(({ z }, i) => {
+    .map(({ z, block, seat }, i) => {
       const ex = explainZone(a, z, p);
       const adv = seatAdvice(z, p, standingFloor);
       return {
@@ -208,6 +315,9 @@ export function topZones(a: ZoneAnalysis, v: ZoneVenue, p: Persona, sold: Set<st
         reasons: ex.reasons,
         tradeoff: z.caution && (p.companion === 'kids' || !ex.tradeoff) ? z.caution : ex.tradeoff,
         zoneId: z.id,
+        seatLine: block && seat ? seatLine(block, seat) : '스탠딩 구역 — 좌석 번호 없이 서는 위치로 안내해요',
+        blockSeat: seat ?? undefined,
+        split: seat?.split,
         rowAdvice: adv.row,
         sideAdvice: adv.side,
       };

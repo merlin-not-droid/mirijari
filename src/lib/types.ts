@@ -168,6 +168,10 @@ export interface Pick {
   /** 격자형: 좌석 id 목록 / 구역형: 구역 id */
   seatIds?: string[];
   zoneId?: string;
+  /** 몇 열·몇 칸 (구역형) 또는 통로·중앙 기준 위치 (격자형) */
+  seatLine?: string;
+  /** 구역 대표 블록 안의 추천 좌석: r열(0부터), k칸부터 n석 */
+  blockSeat?: { r: number; k: number; n: number };
   rowAdvice?: string;
   sideAdvice?: string;
   split?: boolean;

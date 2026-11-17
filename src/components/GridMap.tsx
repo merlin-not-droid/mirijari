@@ -50,7 +50,7 @@ function GridMap({ venue, analysis, sold, picks, selected, onSeat }: Props) {
     <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', minWidth: Math.min(width * 0.6, 820), maxWidth: width * 1.5 }} role="img"
       aria-label={`${venue.name} 좌석 지도. 밝을수록 나에게 잘 맞는 자리`}>
       <path d={`M ${width * 0.14} 26 Q ${width / 2} ${isScreen ? 6 : 14} ${width * 0.86} 26`} fill="none" stroke="#dfe4ec" strokeWidth={isScreen ? 4 : 9} strokeLinecap="round" opacity={0.85} />
-      <text x={width / 2} y={42} textAnchor="middle" fontSize={11} fill="#6b7483" fontWeight={700} letterSpacing={2}>{isScreen ? 'SCREEN' : 'STAGE'}</text>
+      <text x={width / 2} y={42} textAnchor="middle" fontSize={11} fill="#838d9d" fontWeight={700} letterSpacing={2}>{isScreen ? 'SCREEN' : 'STAGE'}</text>
       {venue.sections.map((s, si) => (
         <g key={s.id}>
           {venue.sections.length > 1 && (
@@ -61,9 +61,10 @@ function GridMap({ venue, analysis, sold, picks, selected, onSeat }: Props) {
             const x0 = (width - row.length * STEP) / 2;
             return (
               <g key={r}>
-                <text x={x0 - 8} y={y + 11.5} textAnchor="end" fontSize={9.5} fill="#6b7483">{s.rowLabels[r]}</text>
+                <text x={x0 - 8} y={y + 11.5} textAnchor="end" fontSize={9.5} fill="#838d9d">{s.rowLabels[r]}</text>
                 {[...row].map((ch, c) => {
                   if (ch === '_') return null;
+                  const num = row.slice(0, c + 1).replace(/_/g, '').length;
                   const id = `${si}-${r}-${c}`;
                   const rank = pickOf.get(id);
                   const isSold = sold.has(id);
@@ -72,7 +73,9 @@ function GridMap({ venue, analysis, sold, picks, selected, onSeat }: Props) {
                     <rect key={c} className={rank ? 'seat is-pick' : 'seat'} x={x0 + c * STEP} y={y} width={SIZE} height={SIZE} rx={4}
                       fill={rank ? PICK_COLORS[rank - 1] : isSold ? 'var(--seat-sold)' : heat(t, 2.4)}
                       stroke={selected === id ? '#fff' : isSold ? '#2f3541' : 'none'} strokeWidth={selected === id ? 2 : 1}
-                      onClick={() => onSeat(id)} />
+                      onClick={() => onSeat(id)}>
+                      <title>{`${s.rowLabels[r]}열 ${num}번 · 핏 ${Math.round((analysis.scores.get(id)!.total / analysis.max) * 100)}${isSold ? ' · 매진' : ''}`}</title>
+                    </rect>
                   );
                 })}
               </g>

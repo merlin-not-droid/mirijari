@@ -89,8 +89,8 @@ export const STYLES: Record<Category, Opt<string>[]> = {
 };
 
 export const MODES: { id: Mode; label: string; desc: string }[] = [
-  { id: 'open', label: '자리 여유', desc: '선택지가 많을 때 — 전체 좌석 중 나에게 맞는 자리' },
-  { id: 'remaining', label: '남은 자리 중', desc: '이미 많이 팔렸을 때 — 매진 좌석을 빼고 추천' },
+  { id: 'open', label: '미리자리', desc: '예매 전 — 나에게 맞는 자리를 몇 열 몇 칸까지 미리 골라 드려요' },
+  { id: 'remaining', label: '남은 자리 중', desc: '예매 화면에 보이는 남은 자리에 맞추면 그 안에서 골라 드려요' },
   { id: 'ticketing', label: '티켓팅 전략', desc: '오픈 전 — 경쟁을 피해 먼저 클릭할 우선순위' },
 ];
 

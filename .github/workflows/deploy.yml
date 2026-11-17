@@ -39,6 +39,11 @@ jobs:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           KOPIS_API_KEY: ${{ secrets.KOPIS_API_KEY }}
           KOBIS_API_KEY: ${{ secrets.KOBIS_API_KEY }}
+          # 광고 ID는 공개돼도 되는 값이라 Secrets가 아닌 Variables에 둔다 (없으면 광고 영역이 표시되지 않음)
+          NEXT_PUBLIC_ADSENSE_CLIENT: ${{ vars.ADSENSE_CLIENT }}
+          NEXT_PUBLIC_AD_SLOT_HOME: ${{ vars.AD_SLOT_HOME }}
+          NEXT_PUBLIC_AD_SLOT_LIST: ${{ vars.AD_SLOT_LIST }}
+          NEXT_PUBLIC_AD_SLOT_RESULT: ${{ vars.AD_SLOT_RESULT }}
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

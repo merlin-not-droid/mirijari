@@ -49,6 +49,14 @@ GitHub Pages는 서버가 없는 정적 호스팅이라 **AI 코멘트와 캡처
 2. Environment Variables에 위 세 키를 넣습니다.
 3. `main`에 푸시하면 자동 배포됩니다. 목록을 매일 갱신하려면 Vercel Deploy Hook을 만들어 예약 호출하세요.
 
+## 광고 (Google AdSense)
+
+광고 영역은 세 곳입니다: 홈 중간, 공연·경기장 목록 아래, 추천 결과 아래. 좌석 지도처럼 누르는 요소 바로 옆에는 두지 않았습니다.
+
+- **자리 미리 보기**: 주소 뒤에 `?ads=preview`를 붙여 열면 광고 자리가 점선 상자로 보입니다 (끄기: `?ads=off`). 개발 서버에서는 항상 보입니다.
+- **실제 광고 켜기**: AdSense 승인 후 GitHub 저장소 **Settings → Secrets and variables → Actions → Variables** 탭에 `ADSENSE_CLIENT`(ca-pub-…), `AD_SLOT_HOME`, `AD_SLOT_LIST`, `AD_SLOT_RESULT`(광고 단위 ID)를 등록하고 다시 배포합니다.
+- **승인 전 준비물**: AdSense는 보통 직접 소유한 도메인을 요구합니다. `github.io` 주소로는 승인이 어려울 수 있어 자체 도메인 연결이 필요할 수 있습니다. 개인정보 처리방침 페이지(`/privacy`)는 준비돼 있습니다.
+
 ## 구조
 
 ```

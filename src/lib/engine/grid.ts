@@ -306,6 +306,15 @@ function blocks(a: GridAnalysis, n: number, sold: Set<string>, mode: Mode): Bloc
   return out.sort((x, y) => y.adj - x.adj);
 }
 
+/** "통로에서 3번째 칸 · 중앙에서 2칸" */
+function positionLine(seats: Seat[]): string {
+  const aisle = Math.min(...seats.map((s) => s.aisleDist));
+  // 두 자리가 중앙선을 사이에 두면(0.5칸) 정중앙으로 본다
+  const center = Math.floor(Math.min(...seats.map((s) => Math.abs(s.x))) / SEAT_W + 0.4);
+  const a = aisle === 0 ? '통로 바로 옆' : `통로에서 ${aisle + 1}번째 칸`;
+  return `${a} · ${center === 0 ? '좌우 정중앙' : `중앙에서 ${center}칸`}`;
+}
+
 const TITLES: Record<Mode, string[]> = {
   open: ['베스트 핏', '대안 A', '대안 B'],
   remaining: ['남은 자리 중 1순위', '2순위', '3순위'],
@@ -349,6 +358,7 @@ export function topPicks(a: GridAnalysis, v: GridVenue, p: Persona, sold: Set<st
       demand: b.demand,
       reasons: ex.reasons,
       tradeoff: ex.tradeoff,
+      seatLine: positionLine(b.seats),
       seatIds: b.seats.map((s) => s.id),
       split,
     };

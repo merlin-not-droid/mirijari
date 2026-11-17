@@ -2,6 +2,7 @@ import { BRAND, CATEGORIES } from '@/lib/options';
 import { DATA_AS_OF } from '@/lib/data';
 import Icon, { Logo } from '@/components/Icon';
 import HeroSeats from '@/components/HeroSeats';
+import AdSlot from '@/components/AdSlot';
 
 // 정적 배포(GitHub Pages)에서는 동적 경로의 프리페치 파일이 404가 되므로 카테고리 이동은 일반 링크를 쓴다
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -36,6 +37,8 @@ export default function Home() {
         ))}
       </nav>
 
+      <AdSlot slot="home" />
+
       <section className="how">
         <h2>이렇게 골라 드려요</h2>
         <div className="how-grid">
@@ -47,7 +50,8 @@ export default function Home() {
 
       <footer className="foot">
         좌석 배치와 구역 정보는 {DATA_AS_OF} 기준의 근사 데이터예요. 실제 좌석 번호·시야·가격은 예매처 좌석도에서 꼭 확인하세요.
-        입력한 정보는 이 기기에만 저장돼요.
+        입력한 정보는 이 기기에만 저장돼요.{' '}
+        <a href={`${BASE}/privacy${SLASH}`}>개인정보 처리방침</a>
       </footer>
     </div>
   );
