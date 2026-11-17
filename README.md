@@ -49,6 +49,23 @@ GitHub Pages는 서버가 없는 정적 호스팅이라 **AI 코멘트와 캡처
 2. Environment Variables에 위 세 키를 넣습니다.
 3. `main`에 푸시하면 자동 배포됩니다. 목록을 매일 갱신하려면 Vercel Deploy Hook을 만들어 예약 호출하세요.
 
+## 검색 노출 (구글·네이버)
+
+페이지마다 제목·설명·대표 주소(canonical)·공유 정보가 들어 있고, 사이트맵은 `/sitemap.xml`에 있습니다. 검색에 나오려면 각 검색엔진에 사이트를 한 번 등록해야 합니다.
+
+**구글 서치 콘솔** (https://search.google.com/search-console)
+1. 속성 추가 → **URL 접두어**에 `https://merlin-not-droid.github.io/mirijari/` 입력
+2. 소유 확인 방법 중 **HTML 태그**를 골라 `content="…"` 안의 값만 복사
+3. GitHub 저장소 **Settings → Secrets and variables → Actions → Variables**에 `GOOGLE_SITE_VERIFICATION`으로 등록하고 다시 배포
+4. 서치 콘솔에서 **확인** → **Sitemaps**에 `sitemap.xml` 제출 → **URL 검사**에서 첫 페이지 색인 요청
+
+**네이버 서치어드바이저** (https://searchadvisor.naver.com)
+1. 웹마스터 도구 → 사이트 등록 → **HTML 태그** 확인 방법의 `content` 값을 복사
+2. 같은 곳에 `NAVER_SITE_VERIFICATION`으로 등록하고 다시 배포
+3. 소유 확인 후 **요청 → 사이트맵 제출**, **웹 페이지 수집** 요청
+
+네이버는 `github.io/저장소` 같은 하위 경로 주소의 등록을 받지 않을 수 있습니다. 그 경우 자체 도메인을 연결한 뒤 `SITE_URL` 변수에 새 주소를 넣으면 됩니다. 등록 후 검색에 나오기까지는 보통 며칠에서 몇 주가 걸립니다.
+
 ## 광고 (Google AdSense)
 
 광고 영역은 세 곳입니다: 홈 중간, 공연·경기장 목록 아래, 추천 결과 아래. 좌석 지도처럼 누르는 요소 바로 옆에는 두지 않았습니다.

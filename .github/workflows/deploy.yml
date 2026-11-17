@@ -44,6 +44,10 @@ jobs:
           NEXT_PUBLIC_AD_SLOT_HOME: ${{ vars.AD_SLOT_HOME }}
           NEXT_PUBLIC_AD_SLOT_LIST: ${{ vars.AD_SLOT_LIST }}
           NEXT_PUBLIC_AD_SLOT_RESULT: ${{ vars.AD_SLOT_RESULT }}
+          # 검색 등록: 소유 확인 코드와 사이트 주소 (Variables)
+          NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+          NEXT_PUBLIC_NAVER_SITE_VERIFICATION: ${{ vars.NAVER_SITE_VERIFICATION }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL }}
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
