@@ -2,18 +2,18 @@ import type { Category, CategoryPrefs, Experience, Flag, Mode, Profile, Sport } 
 
 export const BRAND = { name: '미리자리', en: 'MiriJari', tagline: '키도 취향도 다 다른데, 명당이 하나일 리 없잖아요' };
 
-export const CATEGORIES: { id: Category; name: string; emoji: string; desc: string }[] = [
-  { id: 'concert', name: '콘서트', emoji: '🎤', desc: '아레나·돔·스타디움 구역과 티켓팅 우선순위' },
-  { id: 'musical', name: '뮤지컬', emoji: '🎭', desc: '층·열·좌우까지 내 눈높이에 맞는 자리' },
-  { id: 'movie', name: '영화', emoji: '🎬', desc: '상영관 타입별 최적 열과 번호' },
-  { id: 'sports', name: '스포츠', emoji: '🏟️', desc: '야구·축구·농구·배구 직관 구역' },
+export const CATEGORIES: { id: Category; name: string; desc: string }[] = [
+  { id: 'concert', name: '콘서트', desc: '아레나·돔·스타디움 구역과 티켓팅 우선순위' },
+  { id: 'musical', name: '뮤지컬', desc: '층·열·좌우까지 내 눈높이에 맞는 자리' },
+  { id: 'movie', name: '영화', desc: '상영관 타입별 최적 열과 번호' },
+  { id: 'sports', name: '스포츠', desc: '야구·축구·농구·배구 직관 구역' },
 ];
 
-export const SPORTS: { id: Sport; name: string; emoji: string }[] = [
-  { id: 'baseball', name: '야구', emoji: '⚾' },
-  { id: 'soccer', name: '축구', emoji: '⚽' },
-  { id: 'basketball', name: '농구', emoji: '🏀' },
-  { id: 'volleyball', name: '배구', emoji: '🏐' },
+export const SPORTS: { id: Sport; name: string }[] = [
+  { id: 'baseball', name: '야구' },
+  { id: 'soccer', name: '축구' },
+  { id: 'basketball', name: '농구' },
+  { id: 'volleyball', name: '배구' },
 ];
 
 type Opt<T extends string> = { id: T; label: string; hint?: string };

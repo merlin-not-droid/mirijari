@@ -69,7 +69,7 @@ function GridMap({ venue, analysis, sold, picks, selected, onSeat }: Props) {
                   const isSold = sold.has(id);
                   const t = analysis.pct.get(id)!;
                   return (
-                    <rect key={c} className="seat" x={x0 + c * STEP} y={y} width={SIZE} height={SIZE} rx={4}
+                    <rect key={c} className={rank ? 'seat is-pick' : 'seat'} x={x0 + c * STEP} y={y} width={SIZE} height={SIZE} rx={4}
                       fill={rank ? PICK_COLORS[rank - 1] : isSold ? 'var(--seat-sold)' : heat(t, 2.4)}
                       stroke={selected === id ? '#fff' : isSold ? '#2f3541' : 'none'} strokeWidth={selected === id ? 2 : 1}
                       onClick={() => onSeat(id)} />

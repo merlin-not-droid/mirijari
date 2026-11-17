@@ -51,7 +51,7 @@ export function Stepper({ value, min, max, unit, onChange }: { value: number; mi
   );
 }
 
-export function Seg<T extends string>({ options, value, onChange }: { options: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+export function Seg<T extends string>({ options, value, onChange }: { options: { id: T; label: ReactNode }[]; value: T; onChange: (v: T) => void }) {
   return (
     <div className="seg" role="tablist">
       {options.map((o) => (

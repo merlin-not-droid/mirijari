@@ -7,6 +7,7 @@ import { CINEMA_PRESETS, CINEMA_SIZES, HALLS, makeCinema } from '@/lib/data/grid
 import { STADIUMS } from '@/lib/data/zones';
 import { fetchAiEnabled, loadSnapshot, postJson, shrinkImage } from '@/lib/client';
 import { Chips, Field, Seg, Stepper } from './ui';
+import Icon from './Icon';
 
 export interface Target {
   venue: Venue;
@@ -20,7 +21,7 @@ export interface Target {
 const VenueRow = ({ v, onClick }: { v: Venue; onClick: () => void }) => (
   <button type="button" className="row" onClick={onClick}>
     <div className="grow"><h3>{v.name}</h3><p>{v.sub}</p></div>
-    <span className="arrow" aria-hidden>›</span>
+    <Icon name="chevron" size={18} className="arrow" />
   </button>
 );
 
@@ -86,7 +87,7 @@ function ShowPicker({ category, onPick }: { category: 'concert' | 'musical'; onP
         <div className="list">
           {templates.map((v) => <VenueRow key={v.id} v={v} onClick={() => pick({ ...v, name: ev.venue, sub: `${v.name} 기준 추천` })} />)}
         </div>
-        <p style={{ marginTop: 16 }}><button type="button" className="link-btn" onClick={() => setPending(null)}>← 다른 공연 고르기</button></p>
+        <p style={{ marginTop: 16 }}><button type="button" className="link-btn" onClick={() => setPending(null)}><Icon name="back" size={16} />다른 공연 고르기</button></p>
       </>
     );
   }
@@ -230,7 +231,7 @@ function MoviePicker({ onPick }: { onPick: (t: Target) => void }) {
       <div className="list">
         {CINEMA_PRESETS.map((p) => (
           <button key={p.id} type="button" className="row" onClick={() => onPick({ venue: makeCinema({ hall: p.hall, rows: p.rows, cols: p.cols, name: p.name, sub: p.sub }), title: movie || undefined })}>
-            <div className="grow"><h3>{p.name}</h3><p>{p.sub}</p></div><span className="arrow" aria-hidden>›</span>
+            <div className="grow"><h3>{p.name}</h3><p>{p.sub}</p></div><Icon name="chevron" size={18} className="arrow" />
           </button>
         ))}
       </div>
@@ -249,7 +250,7 @@ function SportsPicker({ onPick }: { onPick: (t: Target) => void }) {
     <>
       <h1 className="page-title">어느 경기장에 가나요</h1>
       <p className="page-sub">종목을 고르고 방문할 프로 경기장을 선택하세요.</p>
-      <Seg options={SPORTS.map((s) => ({ id: s.id, label: `${s.emoji} ${s.name}` }))} value={sport} onChange={setSport} />
+      <Seg options={SPORTS.map((s) => ({ id: s.id, label: <><Icon name={s.id} size={17} />{s.name}</> }))} value={sport} onChange={setSport} />
       <div className="list">
         {STADIUMS[sport].map((v) => <VenueRow key={v.id} v={v} onClick={() => onPick({ venue: v })} />)}
       </div>

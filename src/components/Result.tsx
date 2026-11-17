@@ -14,18 +14,20 @@ import { demandBadge, PICK_COLORS, Seg } from './ui';
 // ───────── 추천 카드 ─────────
 function PickCard({ pick, mode, onFocus }: { pick: Pick; mode: Mode; onFocus?: () => void }) {
   const d = demandBadge(pick.demand);
+  const vars = { ['--c' as string]: PICK_COLORS[pick.rank - 1], ['--i' as string]: pick.rank - 1 };
   return (
-    <article className="pick" style={{ ['--c' as string]: PICK_COLORS[pick.rank - 1] }} onClick={onFocus}>
-      <div className="pick-head">
-        <div>
-          <div className="pick-rank">{pick.rank} · {pick.title}</div>
+    <article className={pick.rank === 1 ? 'pick pick-top' : 'pick'} style={vars} onClick={onFocus}>
+      <header className="pick-head">
+        <span className="pick-rank" aria-hidden>{pick.rank}</span>
+        <div className="pick-name">
+          <p className="pick-title">{pick.title}</p>
           <h3 className="pick-label">{pick.label}</h3>
           {pick.zoneId && <p className="pick-where">{pick.where}</p>}
         </div>
-        <div className="pick-score"><b>{pick.score}</b><small>나와의 핏</small></div>
-      </div>
-      <ul>
-        {pick.reasons.map((r) => <li key={r}>{r}</li>)}
+        <p className="pick-score"><b>{pick.score}</b><span>핏</span></p>
+      </header>
+      <ul className="reasons">
+        {pick.reasons.map((r) => <li key={r} className="plus">{r}</li>)}
         {pick.tradeoff && <li className="minus">{pick.tradeoff}</li>}
       </ul>
       {pick.rowAdvice && (
@@ -34,10 +36,12 @@ function PickCard({ pick, mode, onFocus }: { pick: Pick; mode: Mode; onFocus?: (
           <div><dt>좌우</dt><dd>{pick.sideAdvice}</dd></div>
         </dl>
       )}
-      <div className="pick-foot">
-        {mode !== 'remaining' && <span className={`badge ${d.cls}`}>{d.text}</span>}
-        {pick.split && <span className="badge">연석이 없어 나눠 앉는 조합</span>}
-      </div>
+      {(mode !== 'remaining' || pick.split) && (
+        <div className="pick-foot">
+          {mode !== 'remaining' && <span className={'badge ' + d.cls}>{d.text}</span>}
+          {pick.split && <span className="badge">연석이 없어 나눠 앉는 조합</span>}
+        </div>
+      )}
     </article>
   );
 }
@@ -144,9 +148,9 @@ function GridResult({ venue, persona, mode, target }: { venue: GridVenue; person
   const selPoint = selInfo ? toPoint(analysis, selInfo.score.total) : 0;
 
   return (
-    <>
+    <div className="result-cols">
       {mode === 'remaining' && !captured && (
-        <section className="card">
+        <section className="card r-controls">
           <h2 className="card-title">지금 얼마나 팔렸나요</h2>
           <div className="range-row">
             <output>{Math.round(rate * 100)}<small>% 예매</small></output>
@@ -154,22 +158,22 @@ function GridResult({ venue, persona, mode, target }: { venue: GridVenue; person
           </div>
           <p className="seg-desc">인기 좌석부터 팔린다고 가정한 예시예요. 실제 예매 화면과 다르면 아래에서 좌석을 눌러 맞춰 주세요.</p>
           <button type="button" className={`btn small ${editing ? '' : 'ghost'}`} style={{ marginTop: 12 }} onClick={() => setEditing(!editing)}>
-            {editing ? '✓ 표시 끝내기' : '매진 좌석 직접 표시하기'}
+            {editing ? '표시 끝내기' : '매진 좌석 직접 표시하기'}
           </button>
         </section>
       )}
-      {mode === 'remaining' && captured && <div className="notice">캡처에서 읽은 남은 자리 기준이에요. 인식이 틀린 좌석은 지도에서 눌러 고칠 수 있어요. <button type="button" className="link-btn" onClick={() => setEditing(!editing)}>{editing ? '수정 끝내기' : '수정하기'}</button></div>}
+      {mode === 'remaining' && captured && <div className="notice r-controls">캡처에서 읽은 남은 자리 기준이에요. 인식이 틀린 좌석은 지도에서 눌러 고칠 수 있어요. <button type="button" className="link-btn" onClick={() => setEditing(!editing)}>{editing ? '수정 끝내기' : '수정하기'}</button></div>}
 
-      <section className="map-card">
+      <section className="map-card r-map">
         <div className="map-scroll" ref={scroller}>
           <GridMap venue={venue} analysis={analysis} sold={sold} picks={picks} selected={selected} onSeat={onSeat} />
         </div>
         {sel && selInfo && (
           <div className="detail">
             <h3><span>{seatLabel(venue, [sel])}{sold.has(sel.id) ? ' · 매진' : ''}</span><span>핏 {selPoint}{picks[0] && <small style={{ color: 'var(--muted)', fontWeight: 400 }}> · 1순위 대비 {selPoint - picks[0].score >= 0 ? '+' : ''}{selPoint - picks[0].score}</small>}</span></h3>
-            <ul>
-              {selInfo.reasons.map((r) => <li key={r}>✓ {r}</li>)}
-              {selInfo.tradeoff && <li>△ {selInfo.tradeoff}</li>}
+            <ul className="reasons">
+              {selInfo.reasons.map((r) => <li key={r} className="plus">{r}</li>)}
+              {selInfo.tradeoff && <li className="minus">{selInfo.tradeoff}</li>}
             </ul>
           </div>
         )}
@@ -183,10 +187,13 @@ function GridResult({ venue, persona, mode, target }: { venue: GridVenue; person
         </div>
       </section>
 
-      {picks.length ? picks.map((p) => <PickCard key={p.label} pick={p} mode={mode} onFocus={() => setSelected(p.seatIds![Math.floor((p.seatIds!.length - 1) / 2)])} />)
+      <div className="r-picks">
+        {picks.length ? picks.map((p) => <PickCard key={p.label} pick={p} mode={mode} onFocus={() => setSelected(p.seatIds![Math.floor((p.seatIds!.length - 1) / 2)])} />)
         : <p className="empty">남은 자리에서 {persona.partySize}명이 앉을 곳을 찾지 못했어요. 매진 표시를 줄이거나 인원을 나눠 보세요.</p>}
+        <AiComment persona={persona} venueName={venue.name} mode={mode} picks={picks} />
+      </div>
 
-      <section className="card">
+      <section className="card r-compare">
         <h2 className="card-title">열별로 비교하기 — 한 줄 앞? 한 줄 뒤?</h2>
         {venue.sections.length > 1 && <div style={{ marginBottom: 14 }}><Seg options={venue.sections.map((s, i) => ({ id: String(i), label: s.name }))} value={String(sec)} onChange={(v) => setSecTab(Number(v))} /></div>}
         <div className="bars">
@@ -200,8 +207,7 @@ function GridResult({ venue, persona, mode, target }: { venue: GridVenue; person
         </div>
         <p className="seg-desc">각 열에서 {persona.partySize}명이 앉을 수 있는 가장 좋은 자리의 점수예요. 막대 차이가 작으면 어느 열이든 비슷하다는 뜻이에요.</p>
       </section>
-      <AiComment persona={persona} venueName={venue.name} mode={mode} picks={picks} />
-    </>
+    </div>
   );
 }
 
@@ -219,19 +225,19 @@ function ZoneResult({ venue, persona, mode }: { venue: ZoneVenue; persona: Perso
   const toggleSold = (id: string) => setSoldZones((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   return (
-    <>
+    <div className="result-cols">
       {venue.template === 'arena' && (
-        <div className="summary">
+        <div className="summary r-controls">
           <span>플로어가 <b>{standing ? '스탠딩' : '좌석'}</b>인 공연으로 계산 중</span>
           <button type="button" className="link-btn" onClick={() => setStanding(!standing)}>{standing ? '좌석으로' : '스탠딩으로'} 바꾸기</button>
         </div>
       )}
-      <section className="map-card">
+      <section className="map-card r-map">
         <div className="map-scroll"><ZoneMap venue={venue} analysis={analysis} sold={sold} picks={picks} selected={selected} onZone={(id) => setSelected(id === selected ? null : id)} /></div>
         {sel && selAdvice && (
           <div className="detail">
             <h3><span>{sel.name}</span><span>핏 {zonePoint(analysis, sel.id)}</span></h3>
-            <ul><li>{sel.desc}</li><li>몇 열 — {selAdvice.row}</li><li>좌우 — {selAdvice.side}</li>{sel.caution && <li>△ {sel.caution}</li>}</ul>
+            <ul className="reasons"><li>{sel.desc}</li><li>몇 열 — {selAdvice.row}</li><li>좌우 — {selAdvice.side}</li>{sel.caution && <li className="minus">{sel.caution}</li>}</ul>
           </div>
         )}
         <div className="map-tools">
@@ -240,9 +246,12 @@ function ZoneResult({ venue, persona, mode }: { venue: ZoneVenue; persona: Perso
         </div>
       </section>
 
-      {picks.length ? picks.map((p) => <PickCard key={p.label} pick={p} mode={mode} onFocus={() => setSelected(p.zoneId!)} />) : <p className="empty">남은 구역이 없어요. 매진 표시를 확인해 주세요.</p>}
+      <div className="r-picks">
+        {picks.length ? picks.map((p) => <PickCard key={p.label} pick={p} mode={mode} onFocus={() => setSelected(p.zoneId!)} />) : <p className="empty">남은 구역이 없어요. 매진 표시를 확인해 주세요.</p>}
+        <AiComment persona={persona} venueName={venue.name} mode={mode} picks={picks} />
+      </div>
 
-      <section className="card">
+      <section className="card r-compare">
         <h2 className="card-title">{mode === 'remaining' ? '매진된 구역을 표시해 주세요' : '전체 구역 비교'}</h2>
         <div className="bars">
           {ranked.map((z, i) => (
@@ -257,8 +266,7 @@ function ZoneResult({ venue, persona, mode }: { venue: ZoneVenue; persona: Perso
           ))}
         </div>
       </section>
-      <AiComment persona={persona} venueName={venue.name} mode={mode} picks={picks} />
-    </>
+    </div>
   );
 }
 
@@ -268,6 +276,7 @@ export default function Result({ target, persona }: { target: Target; persona: P
   const [mode, setMode] = useState<Mode>(target.initialSold ? 'remaining' : target.state === '공연예정' ? 'ticketing' : 'open');
   return (
     <>
+      <div className="result-head">
       <div className="venue-head">
         <h1>{venue.name}</h1>
         <p>{[target.title, venue.sub].filter(Boolean).join(' · ')}</p>
@@ -275,6 +284,7 @@ export default function Result({ target, persona }: { target: Target; persona: P
       <Seg options={MODES} value={mode} onChange={setMode} />
       <p className="seg-desc">{MODES.find((m) => m.id === mode)!.desc}</p>
       {venue.note && <div className="notice plain">{venue.note}</div>}
+      </div>
 
       {venue.kind === 'grid'
         ? <GridResult venue={venue} persona={persona} mode={mode} target={target} />

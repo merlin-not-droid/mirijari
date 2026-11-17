@@ -92,7 +92,7 @@ export default function ZoneMap({ venue, analysis, sold, picks, selected, onZone
           <g key={z.id} onClick={() => onZone(z.id)}>
             <title>{z.name}</title>
             {z.shapes.map((s, i) => (
-              <path key={i} className="zone-shape" d={shapePath(s)} fill={fill} style={selected === z.id ? { stroke: '#fff', strokeWidth: 2.5 } : undefined} />
+              <path key={i} className={rank ? 'zone-shape is-pick' : 'zone-shape'} d={shapePath(s)} fill={fill} style={selected === z.id ? { stroke: '#fff', strokeWidth: 2.5 } : undefined} />
             ))}
             {rank && z.shapes.map((s, i) => {
               const [x, y] = center(s);
